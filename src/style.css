@@ -16,30 +16,30 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-color);
+  background-color: #000; /* Black background for letterboxing */
   color: var(--text-light);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   touch-action: none; /* Prevent scroll on touch */
 }
 
 #game-container {
   position: relative;
-  width: 100%;
-  max-width: 800px;
-  /* Ensure it fits in landscape orientation by constraining max-width based on viewport height */
-  max-width: min(800px, calc(100vh * 16 / 9));
-  max-width: min(800px, calc(100dvh * 16 / 9));
-  aspect-ratio: 16/9;
-  max-height: 100vh;
-  max-height: 100dvh;
+  /* Make it scale to maximum size possible while keeping 16:9 */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: calc(100vh * 16 / 9);
+  max-width: calc(100dvh * 16 / 9);
+  max-height: calc(100vw * 9 / 16);
+  
   background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 100%);
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
   overflow: hidden;
+  /* Removed border-radius and shadow to feel like a native fullscreen app */
 }
 
 #gameCanvas {
