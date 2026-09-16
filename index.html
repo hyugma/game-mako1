@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mako Action Game</title>
+    <link rel="stylesheet" href="./src/style.css" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="800" height="450"></canvas>
+      
+      <!-- UI Overlays -->
+      <div id="ui-layer">
+        <div id="start-screen" class="screen active">
+          <h1>Mako Game</h1>
+          <p>Tap or Press SPACE to Jump</p>
+          <button id="start-btn">PLAY</button>
+        </div>
+        
+        <div id="game-over-screen" class="screen">
+          <h2>GAME OVER</h2>
+          <p id="score-display">Score: 0</p>
+          <button id="restart-btn">TRY AGAIN</button>
+        </div>
+
+        <div id="win-screen" class="screen">
+          <h2>LEVEL CLEARED!</h2>
+          <p>Amazing!</p>
+          <button id="next-btn">PLAY AGAIN</button>
+        </div>
+
+        <div id="hud">
+          <div class="score">Score: <span id="current-score">0</span></div>
+        </div>
+      </div>
+      
+      <!-- Mobile Controls (Invisible layer for tapping) -->
+      <div id="touch-controls"></div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
