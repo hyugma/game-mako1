@@ -37,38 +37,54 @@ export class Game {
     // Keyboard
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
-        this.handleAction();
+        if (this.state === 'PLAYING' && this.player) {
+          this.player.jump();
+        } else if (this.state !== 'PLAYING') {
+          // Allow starting game with space from menus
+          this.start();
+        }
+      }
+      
+      if (this.state === 'PLAYING' && this.player) {
+        if (e.code === 'ArrowLeft') {
+          this.player.direction = -1;
+        } else if (e.code === 'ArrowRight') {
+          this.player.direction = 1;
+        }
       }
     });
 
-    // Touch / Click (only trigger jump during gameplay)
+    // Touch / Click (only trigger during gameplay)
     const touchArea = document.getElementById('touch-controls');
-    touchArea.addEventListener('touchstart', (e) => {
-      if (this.state === 'PLAYING') {
-        e.preventDefault();
-        this.handleAction();
-      }
-    }, { passive: false });
     
-    touchArea.addEventListener('mousedown', (e) => {
-      if (this.state === 'PLAYING') {
+    const handleTouchOrMouse = (e) => {
+      if (this.state === 'PLAYING' && this.player) {
         e.preventDefault();
-        this.handleAction();
+        const rect = touchArea.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        // 画面の上半分はジャンプ
+        if (clientY < rect.height / 2) {
+          this.player.jump();
+        } else {
+          // 下半分の左右で方向転換
+          if (clientX < rect.width / 2) {
+            this.player.direction = -1;
+          } else {
+            this.player.direction = 1;
+          }
+        }
       }
-    });
+    };
+
+    touchArea.addEventListener('touchstart', handleTouchOrMouse, { passive: false });
+    touchArea.addEventListener('mousedown', handleTouchOrMouse);
 
     // UI Buttons
     document.getElementById('start-btn').addEventListener('click', () => this.start());
     document.getElementById('restart-btn').addEventListener('click', () => this.backToMenu());
     document.getElementById('next-btn').addEventListener('click', () => this.backToMenu());
-  }
-
-  handleAction() {
-    if (this.state === 'PLAYING' && this.player) {
-      this.player.jump();
-    } else if (this.state === 'MENU' || this.state === 'GAMEOVER' || this.state === 'WIN') {
-      this.start();
-    }
   }
 
   setupSkinSelector() {
@@ -144,8 +160,22 @@ export class Game {
 
     this.player.update(dt);
     
-    // Camera follows player
-    this.cameraX = this.player.x - 100;
+    // Camera follows player smoothly based on direction
+    const screenWidth = this.canvas.width;
+    const margin = 80; // おにぎりを画面の端からどれくらい離すか (150 -> 80に変更して画面端に寄せる)
+
+    let targetCameraX;
+    if (this.player.direction === 1) {
+      // 右に進んでいるときは左寄りに配置
+      targetCameraX = this.player.x - margin;
+    } else {
+      // 左に進んでいるときは右寄りに配置
+      targetCameraX = this.player.x - (screenWidth - margin) + this.player.width;
+    }
+
+    // カメラを滑らかにゆっくり追従させる
+    this.cameraX += (targetCameraX - this.cameraX) * 1.5 * dt;
+
     if (this.cameraX < 0) this.cameraX = 0;
 
     // Calculate Score (based on distance)

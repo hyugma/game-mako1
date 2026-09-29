@@ -10,6 +10,7 @@ export class Player {
     this.vx = 0;
     this.vy = 0;
     this.speed = 280;
+    this.direction = 1; // 1 for right, -1 for left
     this.jumpForce = -620;
     this.gravity = 1500;
     this.isGrounded = false;
@@ -26,6 +27,9 @@ export class Player {
   }
 
   update(dt) {
+    // 前フレームで実際に移動した距離（衝突判定による押し戻しを考慮）
+    const actualDx = this.x - (this.prevX !== undefined ? this.prevX : this.x);
+
     this.prevX = this.x;
     this.prevY = this.y;
 
@@ -36,18 +40,18 @@ export class Player {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // Auto move right (runner style)
-    this.vx = this.speed;
+    // Auto move based on direction
+    this.vx = this.speed * this.direction;
 
-    // Rolling rotation: angular velocity tied to horizontal speed
-    // Positive vx = clockwise rotation (rolling right)
-    if (this.isGrounded) {
-      this.angularVel = this.vx / this.radius;
+    // Rolling rotation: only when grounded and actually moving
+    if (this.isGrounded && Math.abs(actualDx) > 0.1) {
+      // Rotation tied to actual horizontal movement
+      this.angularVel = actualDx / (this.radius * dt) / this.radius;
+      this.rotation += actualDx / this.radius;
     } else {
-      // In air: spin faster for fun effect
-      this.angularVel = this.vx / this.radius * 1.5;
+      // In air or stuck against wall: no rotation
+      this.angularVel = 0;
     }
-    this.rotation += this.angularVel * dt;
 
     // Squash/stretch spring animation
     const springK = 25;

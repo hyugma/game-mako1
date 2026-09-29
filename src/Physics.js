@@ -16,8 +16,15 @@ export function checkCollisions(player, level) {
         isGrounded = true;
       } else {
         // Hitting side of platform
-        if (player.x + player.width > plat.x && player.x < plat.x) {
+        const playerCenterX = player.x + player.width / 2;
+        const platCenterX = plat.x + plat.width / 2;
+        
+        if (playerCenterX < platCenterX) {
+          // Push left (hitting left side of platform)
           player.x = plat.x - player.width;
+        } else {
+          // Push right (hitting right side of platform)
+          player.x = plat.x + plat.width;
         }
       }
     }
