@@ -37,7 +37,7 @@ body {
   max-width: calc(100dvh * 16 / 9);
   max-height: calc(100vw * 9 / 16);
   
-  background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 100%);
+  background: linear-gradient(180deg, #87CEEB 0%, #B5E8F7 40%, #FFE4C9 85%, #FFDAB9 100%);
   overflow: hidden;
   /* Removed border-radius and shadow to feel like a native fullscreen app */
 }
@@ -165,5 +165,90 @@ button:active {
   width: 100%;
   height: 100%;
   z-index: 10;
-  /* Invisible, just used to capture tap events on mobile */
+  pointer-events: none; /* JS側でPLAYING時のみautoに切替 */
+}
+
+/* ===== Skin Selector ===== */
+
+#skin-selector-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.skin-label {
+  font-size: 1rem !important;
+  margin-bottom: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 1px;
+}
+
+#skin-selector {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.skin-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+  min-width: 90px;
+}
+
+.skin-btn img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease;
+}
+
+.skin-btn span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+
+.skin-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(79, 172, 254, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.skin-btn:hover img {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.skin-btn:hover span {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.skin-btn.selected {
+  background: rgba(79, 172, 254, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 12px rgba(79, 172, 254, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.skin-btn.selected span {
+  color: var(--secondary-color);
+}
+
+.skin-btn.selected img {
+  transform: scale(1.05);
+}
+
+.skin-btn:active {
+  transform: translateY(0px);
 }

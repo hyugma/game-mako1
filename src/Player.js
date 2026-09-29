@@ -1,48 +1,236 @@
+import { skinManager } from './OnigiriSkins.js';
+
 export class Player {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.width = 30;
-    this.height = 40;
+    this.radius = 22; // collision radius
+    this.width = 44;  // bounding box for collision compatibility
+    this.height = 44;
     this.vx = 0;
     this.vy = 0;
-    this.speed = 300; // pixels per second
-    this.jumpForce = -600;
+    this.speed = 280;
+    this.jumpForce = -620;
     this.gravity = 1500;
     this.isGrounded = false;
-    this.color = '#ff4757';
+    this.rotation = 0;        // current rotation angle (radians)
+    this.angularVel = 0;      // rotation speed
+    this.squash = 1;          // squash/stretch factor
+    this.squashVel = 0;
+    this.wasGrounded = false;
+    this.trailParticles = [];
+    this.jumpParticles = [];
+
+    // Sprite rendering size (how big the image draws)
+    this.spriteSize = 56;
   }
 
   update(dt) {
     this.prevX = this.x;
     this.prevY = this.y;
-    
+
     // Apply gravity
     this.vy += this.gravity * dt;
 
     // Move player
     this.x += this.vx * dt;
     this.y += this.vy * dt;
-    
-    // Auto move right for side-scrolling action (runner style)
+
+    // Auto move right (runner style)
     this.vx = this.speed;
+
+    // Rolling rotation: angular velocity tied to horizontal speed
+    // Positive vx = clockwise rotation (rolling right)
+    if (this.isGrounded) {
+      this.angularVel = this.vx / this.radius;
+    } else {
+      // In air: spin faster for fun effect
+      this.angularVel = this.vx / this.radius * 1.5;
+    }
+    this.rotation += this.angularVel * dt;
+
+    // Squash/stretch spring animation
+    const springK = 25;
+    const damping = 8;
+    this.squashVel += (-this.squash + 1) * springK * dt;
+    this.squashVel *= (1 - damping * dt);
+    this.squash += this.squashVel * dt;
+
+    // Landing detection: trigger squash
+    if (this.isGrounded && !this.wasGrounded) {
+      this.squash = 0.7;
+      this.squashVel = 4;
+      // Landing particles
+      for (let i = 0; i < 6; i++) {
+        this.jumpParticles.push({
+          x: this.x + this.radius,
+          y: this.y + this.height,
+          vx: (Math.random() - 0.5) * 150,
+          vy: -Math.random() * 80 - 20,
+          life: 0.4 + Math.random() * 0.3,
+          maxLife: 0.4 + Math.random() * 0.3,
+          size: 3 + Math.random() * 3,
+        });
+      }
+    }
+    this.wasGrounded = this.isGrounded;
+
+    // Trail particles when grounded
+    if (this.isGrounded && Math.random() < 0.3) {
+      this.trailParticles.push({
+        x: this.x + this.radius,
+        y: this.y + this.height - 2,
+        life: 0.3 + Math.random() * 0.2,
+        maxLife: 0.3 + Math.random() * 0.2,
+        size: 2 + Math.random() * 2,
+      });
+    }
+
+    // Update particles
+    this.trailParticles.forEach(p => {
+      p.life -= dt;
+    });
+    this.trailParticles = this.trailParticles.filter(p => p.life > 0);
+
+    this.jumpParticles.forEach(p => {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 200 * dt;
+    });
+    this.jumpParticles = this.jumpParticles.filter(p => p.life > 0);
   }
 
   jump() {
     if (this.isGrounded) {
       this.vy = this.jumpForce;
       this.isGrounded = false;
+      // Stretch on jump
+      this.squash = 1.3;
+      this.squashVel = -3;
+      // Jump particles
+      for (let i = 0; i < 5; i++) {
+        this.jumpParticles.push({
+          x: this.x + this.radius,
+          y: this.y + this.height,
+          vx: (Math.random() - 0.5) * 120,
+          vy: Math.random() * 40 + 10,
+          life: 0.3 + Math.random() * 0.2,
+          maxLife: 0.3 + Math.random() * 0.2,
+          size: 3 + Math.random() * 3,
+        });
+      }
     }
   }
 
   draw(ctx, cameraX) {
-    ctx.fillStyle = this.color;
-    // We draw relative to camera
-    ctx.fillRect(this.x - cameraX, this.y, this.width, this.height);
-    
-    // Draw some details to make it look a bit better than just a square
-    ctx.fillStyle = '#ffffff';
-    // Eye
-    ctx.fillRect(this.x - cameraX + 20, this.y + 10, 5, 5);
+    const screenX = this.x - cameraX + this.radius;
+    const screenY = this.y + this.height / 2;
+
+    // Draw trail particles (behind onigiri)
+    this.trailParticles.forEach(p => {
+      const alpha = p.life / p.maxLife * 0.4;
+      ctx.fillStyle = `rgba(200, 180, 140, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x - cameraX, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Draw jump/land particles
+    this.jumpParticles.forEach(p => {
+      const alpha = p.life / p.maxLife * 0.6;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x - cameraX, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // --- Shadow on ground ---
+    if (this.isGrounded) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.beginPath();
+      ctx.ellipse(screenX, this.y + this.height + 2, this.radius * 0.8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Shadow gets smaller/lighter as player goes higher
+      const shadowDist = Math.min((this.y + this.height) / 350, 1);
+      const shadowAlpha = 0.1 * shadowDist;
+      const shadowWidth = this.radius * 0.5 * shadowDist;
+      ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
+      ctx.beginPath();
+      ctx.ellipse(screenX, 352, shadowWidth, 3 * shadowDist, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Draw the onigiri sprite ---
+    ctx.save();
+    ctx.translate(screenX, screenY);
+
+    // Apply squash/stretch (1/squash for width to keep volume)
+    const sx = 1 / this.squash;
+    const sy = this.squash;
+    ctx.scale(sx, sy);
+
+    // Apply rotation
+    ctx.rotate(this.rotation);
+
+    const spriteImg = skinManager.getCurrentImage();
+
+    if (spriteImg) {
+      // Draw sprite image centered
+      const half = this.spriteSize / 2;
+      ctx.drawImage(spriteImg, -half, -half, this.spriteSize, this.spriteSize);
+    } else {
+      // Fallback: draw a simple onigiri shape if image not loaded
+      this._drawFallbackOnigiri(ctx);
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * フォールバック描画: 画像未ロード時のシンプルなおにぎり描画
+   */
+  _drawFallbackOnigiri(ctx) {
+    const r = this.radius + 2;
+    const topY = -r * 1.1;
+    const botY = r * 0.7;
+    const halfW = r * 0.95;
+
+    // Body
+    ctx.beginPath();
+    ctx.moveTo(0, topY);
+    ctx.quadraticCurveTo(halfW * 1.2, topY * 0.1, halfW, botY);
+    ctx.quadraticCurveTo(0, botY * 1.3, -halfW, botY);
+    ctx.quadraticCurveTo(-halfW * 1.2, topY * 0.1, 0, topY);
+    ctx.closePath();
+
+    const riceGrad = ctx.createLinearGradient(0, topY, 0, botY);
+    riceGrad.addColorStop(0, '#FEFEFE');
+    riceGrad.addColorStop(0.5, '#F5F0E8');
+    riceGrad.addColorStop(1, '#EDE5D8');
+    ctx.fillStyle = riceGrad;
+    ctx.fill();
+    ctx.strokeStyle = '#D5CFC2';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Face
+    const eyeY = topY * 0.15;
+    const eyeSpacing = r * 0.3;
+    ctx.fillStyle = '#3D2B1F';
+    ctx.beginPath();
+    ctx.arc(-eyeSpacing, eyeY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(eyeSpacing, eyeY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    const mouthY = eyeY + r * 0.25;
+    ctx.strokeStyle = '#3D2B1F';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, mouthY - 2, 3, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
   }
 }

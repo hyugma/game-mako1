@@ -1,7 +1,7 @@
 export function checkCollisions(player, level) {
   let isGrounded = false;
   
-  // Floor collision (deadly pits)
+  // Floor collision (deadly pits - fell off screen)
   if (player.y > 600) {
     return { type: 'death' };
   }
@@ -10,7 +10,7 @@ export function checkCollisions(player, level) {
   for (const plat of level.platforms) {
     if (rectIntersect(player, plat)) {
       // Simple resolution: if falling and was previously above platform
-      if (player.vy >= 0 && (player.prevY !== undefined ? (player.prevY + player.height <= plat.y + 0.1) : true)) {
+      if (player.vy >= 0 && (player.prevY !== undefined ? (player.prevY + player.height <= plat.y + 5) : true)) {
         player.y = plat.y - player.height;
         player.vy = 0;
         isGrounded = true;
@@ -25,12 +25,18 @@ export function checkCollisions(player, level) {
 
   player.isGrounded = isGrounded;
 
-  // Check obstacles
+  // Check obstacles - use circular hitbox for onigiri (feels fairer)
+  const cx = player.x + player.width / 2;
+  const cy = player.y + player.height / 2;
+  const cr = (player.radius || player.width / 2) - 4; // slightly smaller for fairness
+
   for (const obs of level.obstacles) {
-    // Make hitbox slightly smaller for obstacles to feel fair
-    const shrink = 5;
-    const pRect = { x: player.x + shrink, y: player.y + shrink, width: player.width - shrink*2, height: player.height - shrink*2 };
-    if (rectIntersect(pRect, obs)) {
+    // Circle vs rect collision
+    const closestX = Math.max(obs.x, Math.min(cx, obs.x + obs.width));
+    const closestY = Math.max(obs.y, Math.min(cy, obs.y + obs.height));
+    const distX = cx - closestX;
+    const distY = cy - closestY;
+    if (distX * distX + distY * distY < cr * cr) {
       return { type: 'death' };
     }
   }

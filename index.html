@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Mako Action Game</title>
+    <title>おにぎりコロコロ</title>
     <link rel="stylesheet" href="./src/style.css" />
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,21 +17,25 @@
       <!-- UI Overlays -->
       <div id="ui-layer">
         <div id="start-screen" class="screen active">
-          <h1>Mako Game</h1>
-          <p>Tap or Press SPACE to Jump</p>
-          <button id="start-btn">PLAY</button>
+          <h1>🍙 おにぎりコロコロ</h1>
+          <p>タップ or SPACEでジャンプ！穴に落ちないで！</p>
+          <div id="skin-selector-wrapper">
+            <p class="skin-label">おにぎりを選んでね</p>
+            <div id="skin-selector"></div>
+          </div>
+          <button id="start-btn">スタート</button>
         </div>
         
         <div id="game-over-screen" class="screen">
           <h2>GAME OVER</h2>
           <p id="score-display">Score: 0</p>
-          <button id="restart-btn">TRY AGAIN</button>
+          <button id="restart-btn">もう一回！</button>
         </div>
 
         <div id="win-screen" class="screen">
-          <h2>LEVEL CLEARED!</h2>
-          <p>Amazing!</p>
-          <button id="next-btn">PLAY AGAIN</button>
+          <h2>🎉 ゴール！</h2>
+          <p>おにぎり、無事到着！すごい！</p>
+          <button id="next-btn">もう一回！</button>
         </div>
 
         <div id="hud">
